@@ -63,7 +63,7 @@ namespace api.Controllers
             }
             catch (Exception ex)
             {
-                throw;
+                return BadRequest(error: new ResponseAPI(statusCode: 400, message: ex.Message));
             }
         }
         [HttpPost("Add-Product")]
