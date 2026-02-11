@@ -47,17 +47,17 @@ namespace api.Controllers
             {
 
 
-                var product = await work.productRepository.GetByIdAsync(
+                var newproduct = await work.productRepository.GetByIdAsync(
     id,
     x => x.category,
     x => x.photos
 );
 
 
-                if (product is null)
+                if (newproduct is null)
                     return BadRequest(new ResponseAPI(statusCode: 400));
 
-                var result = mapper.Map<ProductDto>(product);
+                var result = mapper.Map<ProductDto>(newproduct);
 
                 return Ok(result);
             }
@@ -79,7 +79,7 @@ namespace api.Controllers
                 return BadRequest(error: new ResponseAPI(statusCode: 400, message: ex.Message));
             }
         }
-        [HttpPut("update-product")]
+        [HttpPut("update-newproduct")]
         public async Task<IActionResult> update(updateproductDto productDTO)
         {
             try
