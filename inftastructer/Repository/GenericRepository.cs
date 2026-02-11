@@ -10,9 +10,9 @@ namespace inftastructer.Repository
 {
     public  class GenericRepositories<T> : IGenricRepo<T> where T : class
     {
-        private readonly AppDbcontext _context;
+        private readonly AppDbContext _context;
 
-        public GenericRepositories(AppDbcontext context)
+        public GenericRepositories(AppDbContext context)
         {
             _context = context;
         }

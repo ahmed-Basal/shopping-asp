@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace inftastructer.Data.migration
+namespace inftastructer.Migrations
 {
     /// <inheritdoc />
-    public partial class initscfcsdf : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

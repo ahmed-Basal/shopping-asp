@@ -4,7 +4,8 @@ using System.Text;
 
 namespace core.interfaces
 {
-    public  interface  IPhotoRepository: IGenricRepo<core.Entities.photo>
+    public  interface  IPhotoRepository
     {
+
     }
 }

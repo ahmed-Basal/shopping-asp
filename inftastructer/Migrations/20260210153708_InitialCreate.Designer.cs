@@ -8,11 +8,11 @@ using inftastructer.Data;
 
 #nullable disable
 
-namespace inftastructer.Data.migration
+namespace inftastructer.Migrations
 {
-    [DbContext(typeof(AppDbcontext))]
-    [Migration("20260209144448_init")]
-    partial class init
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260210153708_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,7 +43,15 @@ namespace inftastructer.Data.migration
 
                     b.HasKey("Id");
 
-                    b.ToTable("categories");
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            description = "test",
+                            name = "test"
+                        });
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -65,7 +73,7 @@ namespace inftastructer.Data.migration
 
                     b.HasIndex("productId");
 
-                    b.ToTable("photos");
+                    b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>
@@ -94,34 +102,37 @@ namespace inftastructer.Data.migration
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("products");
+                    b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoryId = 1,
+                            description = "test",
+                            name = "test",
+                            price = 0m
+                        });
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
                 {
-                    b.HasOne("core.Entities.product", "product")
+                    b.HasOne("core.Entities.product", null)
                         .WithMany("photos")
                         .HasForeignKey("productId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("product");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>
                 {
                     b.HasOne("core.Entities.category", "category")
-                        .WithMany("products")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("category");
-                });
-
-            modelBuilder.Entity("core.Entities.category", b =>
-                {
-                    b.Navigation("products");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>

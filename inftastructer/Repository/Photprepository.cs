@@ -7,8 +7,10 @@ namespace inftastructer.Repository
 {
     public class Photprepository : GenericRepositories<core.Entities.photo>, core.interfaces.IPhotoRepository
     {
-        public Photprepository(AppDbcontext context) : base(context)
+        public Photprepository(AppDbContext context) : base(context)
         {
         }
+
+       
     }
 }

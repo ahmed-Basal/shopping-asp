@@ -7,8 +7,10 @@ namespace inftastructer.Repository
 {
     public class CategoryRepository : GenericRepositories<core.Entities.category>, core.interfaces.ICategoryRepository
     {
-        public CategoryRepository(AppDbcontext context) : base(context)
+        public CategoryRepository(AppDbContext context) : base(context)
         {
         }
+
+        
     }
 }

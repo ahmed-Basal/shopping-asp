@@ -8,6 +8,6 @@ namespace core.Entities
     {
         public string name { get; set; }
         public string description { get; set; }
-        public virtual ICollection<product> products { get; set; }=new HashSet<product>();
+      //  public virtual ICollection<product> products { get; set; }=new HashSet<product>();
     }
 }

@@ -8,7 +8,7 @@ namespace core.Entities
     {
         public string iamgename { get; set; }
         public int productId { get; set; }
-        [System.ComponentModel.DataAnnotations.Schema.ForeignKey("productId")]
-        public virtual product product { get; set; }
+        //[System.ComponentModel.DataAnnotations.Schema.ForeignKey("productId")]
+       // public virtual product product { get; set; }
     }
 }
