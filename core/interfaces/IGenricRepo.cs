@@ -20,5 +20,6 @@ namespace core.interfaces
         Task UpdateAsync(T entity);
 
         Task DeleteAsync(int id);
+        Task <int> ContAsync();
     }
 }

@@ -16,8 +16,13 @@ namespace inftastructer.Repository.Services
         }
         public async Task<List<string>> AddImageAsync(IFormFileCollection files, string src)
         {
-            List<string> SaveImageSrc = new List<string>();
+            if (files == null || files.Count == 0)
+                return new List<string>();
 
+            if (string.IsNullOrEmpty(src))
+                src = "DefaultFolder";
+
+            List<string> SaveImageSrc = new List<string>();
             var ImageDirctory = Path.Combine("wwwroot", "Images", src);
 
             if (!Directory.Exists(ImageDirctory))
@@ -30,7 +35,6 @@ namespace inftastructer.Repository.Services
                 if (item.Length > 0)
                 {
                     var ImageName = item.FileName;
-
                     var ImageSrc = $"/Images/{src}/{ImageName}";
                     var root = Path.Combine(ImageDirctory, ImageName);
 
@@ -41,8 +45,8 @@ namespace inftastructer.Repository.Services
                 }
             }
 
-            return SaveImageSrc; 
-}
+            return SaveImageSrc;
+        }
 
 
         public void DeleteImageAsync(string src)

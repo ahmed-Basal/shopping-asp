@@ -11,12 +11,12 @@ namespace inftastructer.Data.Configration
     {
         public void Configure(EntityTypeBuilder<product> builder)
         {
-            builder.Property(x => x.name).IsRequired();
-            builder.Property(x => x.description).IsRequired();
-          
-           
+            builder.Property(x => x.Name).IsRequired();
+            builder.Property(x => x.Description).IsRequired();
+          builder.Property(x=>x.oldPrice).HasColumnType("decimal(18,2)");
+            builder.Property(x => x.NewPrice).HasColumnType("decimal(18,2)");
             builder.HasData(
-                new product { Id = 1, name = "test", description = "test", CategoryId = 1, NewPrice = 20.5m });
+                new product { Id = 1, Name = "test", Description = "test", CategoryId = 1, NewPrice = 20.5m });
         }
     }
 }

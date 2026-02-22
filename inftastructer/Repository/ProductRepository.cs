@@ -2,7 +2,9 @@
 using core.Dto;
 using core.Entities;
 using core.Services;
+using core.shareing;
 using inftastructer.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -46,40 +48,96 @@ namespace inftastructer.Repository
             return true;
         }
 
-        public async Task<bool> update(updateproductDto updateproductDto)
+        public async Task  delete(product product)
         {
-            if (updateproductDto is null)
-            {
-                return false;
-            }
-
-            var FindProduct = await context.Products.Include(m => m.category)
-                .Include(m => m.photos)
-                .FirstOrDefaultAsync(m => m.Id == updateproductDto.id);
-
-            if (FindProduct is null)
-            {
-                return false;
-            }
-            mapper.Map(updateproductDto, FindProduct);
-            var findimage = await context.Photos.Where(m => m.productId == updateproductDto.id).ToListAsync();
-            foreach (var item in findimage)
+           var photo= context.Photos.Where(m => m.productId == product.Id).ToList();
+            foreach (var item in photo)
             {
                 context.Photos.Remove(item);
             }
-            context.Photos.RemoveRange(findimage);
-            var imagepath = await iamgeServices.AddImageAsync(updateproductDto.Photo, updateproductDto.Name);
-            var photo = imagepath.Select(path => new photo
+            context.Photos.RemoveRange(photo);
+            context.Products.Remove(product);
+            await  context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<ProductDto>> GetAll(ProductParameters productparameter)
+        {
+            var query = context.Products
+                .Include(p => p.category)
+                .Include(p => p.photos)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if(!string.IsNullOrEmpty(productparameter.Search))
             {
-                iamgename = path,
-                productId = FindProduct.Id,
-            }).ToList();
-            await context.Photos.AddRangeAsync(photo);
+                var searchWords = productparameter.Search.Split(' ');
+                query = query.Where(m => searchWords.All(word =>
+                    m.Name.ToLower().Contains(word.ToLower()) ||
+                    m.Description.ToLower().Contains(word.ToLower())
+                ));
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(productparameter.Sort))
+            {
+                var sort = productparameter.Sort;
+
+                if (string.Equals(sort, "PriceAsc", StringComparison.OrdinalIgnoreCase))
+                    query = query.OrderBy(p => p.NewPrice);
+
+                else if (string.Equals(sort, "PriceDesc", StringComparison.OrdinalIgnoreCase))
+                    query = query.OrderByDescending(p => p.NewPrice);
+
+                else
+                    query = query.OrderBy(p => p.Name);
+            }
+            else
+            {
+                query = query.OrderBy(p => p.Name);
+            }
+
+            query = query.Skip((productparameter.PageNumber - 1) * productparameter.PageSize).Take(productparameter.PageSize);
+
+            var products = await query.ToListAsync();
+
+            return mapper.Map<IEnumerable<ProductDto>>(products);
+        }
+
+
+
+        public async Task<bool> update(int id, updateproductDto dto)
+        {
+            if (dto == null) return false;
+
+            var product = await context.Products
+                .Include(p => p.category)
+                .Include(p => p.photos)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null) return false;
+
+         
+            if (!string.IsNullOrEmpty(dto.Name)) product.Name = dto.Name;
+            if (!string.IsNullOrEmpty(dto.Description)) product.Description = dto.Description;
+            if (dto.NewPrice.HasValue) product.NewPrice = (decimal)dto.NewPrice;
+            if (dto.CategoryId.HasValue) product.CategoryId = (int)dto.CategoryId;
+
+           
+            if (dto.Photo != null && dto.Photo.Count > 0)
+            {
+                var imagePaths = await iamgeServices.AddImageAsync(dto.Photo, dto.Name ?? "product");
+                var newPhotos = imagePaths.Select(path => new photo
+                {
+                    iamgename = path,
+                    productId = product.Id
+                }).ToList();
+
+                await context.Photos.AddRangeAsync(newPhotos);
+            }
+
             await context.SaveChangesAsync();
             return true;
         }
-
-     
 
 
     }
