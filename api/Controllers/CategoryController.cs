@@ -23,7 +23,7 @@ namespace api.Controllers
                 {
                     var category = await work.CategoryRepository.GetAllAsync();
                     if (category is null)
-                        return BadRequest(new ResponseAPI(400));
+                        return BadRequest(new ResponseAPI(400,"failed"));
                     return Ok(category);
                 }
                 catch (Exception ex)

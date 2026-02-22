@@ -3,6 +3,7 @@ using AutoMapper;
 using core.Dto;
 using core.Entities;
 using core.interfaces;
+using core.shareing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,21 +20,17 @@ namespace api.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> get()
+        public async Task<IActionResult> get([FromQuery] ProductParameters productparameter)
         {
             try
             {
                 var Product = await work.productRepository
-                    .GetAllAsync(x => x.category, x => x.photos);
+                    .GetAll(productparameter); 
 
-                var result = mapper.Map<List<ProductDto>>(Product);
+              var totalcount= await work.productRepository.ContAsync();
+                var productList = Product.ToList().AsReadOnly();
 
-                if (Product is null)
-                {
-                    return BadRequest(new ResponseAPI(400));
-                }
-
-                return Ok(result);
+                return Ok(new pagination<ProductDto>(productparameter.PageNumber,productparameter.PageSize,totalcount, productList));
             }
             catch (Exception ex)
             {
@@ -55,7 +52,7 @@ namespace api.Controllers
 
 
                 if (newproduc is null)
-                    return BadRequest(new ResponseAPI(statusCode: 400));
+                    return BadRequest(new ResponseAPI(statusCode: 400,"failed"));
 
                 var result = mapper.Map<ProductDto>(newproduc);
 
@@ -79,12 +76,12 @@ namespace api.Controllers
                 return BadRequest(error: new ResponseAPI(statusCode: 400, message: ex.Message));
             }
         }
-        [HttpPut("update-newproduc")]
-        public async Task<IActionResult> update(updateproductDto productDTO)
+        [HttpPut("update-product/{id}")]
+        public async Task<IActionResult> update(int id,updateproductDto productDTO)
         {
             try
             {
-                await work.productRepository.update(mapper.Map<updateproductDto>(productDTO));
+                await work.productRepository.update(id,mapper.Map<updateproductDto>(productDTO));
                 return Ok(new ResponseAPI(200, "item update"));
             }
             catch (Exception ex)
@@ -92,6 +89,30 @@ namespace api.Controllers
                 return BadRequest(error: new ResponseAPI(statusCode: 400, message: ex.Message));
             }
 
+        }
+
+
+
+        [HttpDelete(template: "Delete-Product/{Id}")]
+        public async Task<IActionResult> delete(int Id)
+        {
+            try
+            {
+                var product = await work.productRepository.GetByIdAsync(
+     Id,
+     x => x.photos,
+     x => x.category
+ );
+
+
+                await work.productRepository.delete(product);
+
+                return Ok(value: new ResponseAPI(statusCode: 200,"succed delated"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(error: new ResponseAPI(statusCode: 400, message: ex.Message));
+            }
         }
     }
 }

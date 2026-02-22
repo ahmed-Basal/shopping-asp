@@ -12,6 +12,10 @@
             Message = message ?? GetMessageFromStatusCode(statusCode);
         }
 
+        public ResponseAPI(int statusCode, string message = null, string result = null) : this(statusCode, message)
+        {
+        }
+
         private string GetMessageFromStatusCode(int statusCode)
         {
             return statusCode switch
