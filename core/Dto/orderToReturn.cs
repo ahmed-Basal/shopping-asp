@@ -16,7 +16,7 @@ namespace core.Dto
 
         public DeliveryMethod deliveryMethod { get; set; }
         public IReadOnlyList<orderitemDto> orderItems { get; set; }
-        public statues statues { get; set; } = statues.pending;
+        public OrderStatus statues { get; set; } = OrderStatus.pending;
     }
     public record orderitemDto
     {

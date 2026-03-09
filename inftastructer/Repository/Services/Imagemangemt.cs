@@ -14,38 +14,30 @@ namespace inftastructer.Repository.Services
         {
             _fileProvider = fileProvider;
         }
-        public async Task<List<string>> AddImageAsync(IFormFileCollection files, string src)
+        public async Task<List<string>> AddImageAsync(IFormFile file, string src)
         {
-            if (files == null || files.Count == 0)
-                return new List<string>();
+            var saveImageSrc = new List<string>();
+
+            if (file == null || file.Length == 0)
+                return saveImageSrc;
 
             if (string.IsNullOrEmpty(src))
                 src = "DefaultFolder";
 
-            List<string> SaveImageSrc = new List<string>();
-            var ImageDirctory = Path.Combine("wwwroot", "Images", src);
+            var imageDirectory = Path.Combine("wwwroot", "Images", src);
+            if (!Directory.Exists(imageDirectory))
+                Directory.CreateDirectory(imageDirectory);
 
-            if (!Directory.Exists(ImageDirctory))
-            {
-                Directory.CreateDirectory(ImageDirctory);
-            }
+            var imageName = file.FileName;
+            var imageSrc = $"/Images/{src}/{imageName}";
+            var root = Path.Combine(imageDirectory, imageName);
 
-            foreach (var item in files)
-            {
-                if (item.Length > 0)
-                {
-                    var ImageName = item.FileName;
-                    var ImageSrc = $"/Images/{src}/{ImageName}";
-                    var root = Path.Combine(ImageDirctory, ImageName);
+            using var stream = new FileStream(root, FileMode.Create);
+            await file.CopyToAsync(stream);
 
-                    using var stream = new FileStream(root, FileMode.Create);
-                    await item.CopyToAsync(stream);
+            saveImageSrc.Add(imageSrc);
 
-                    SaveImageSrc.Add(ImageSrc);
-                }
-            }
-
-            return SaveImageSrc;
+            return saveImageSrc;
         }
 
 

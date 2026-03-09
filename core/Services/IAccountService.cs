@@ -7,10 +7,16 @@ using System.Text;
 
 namespace core.Services
 {
-    public  interface  IAccountService:IAuth
+    public  interface  IAccountServic
     {
+        Task<string> RegisterAsync(registerDto registerDto);
+        Task<string> LoginAsync(loginDto loginDto);
 
-      
+        Task<string> changepassword(ChangePasswordDto changepassword);
+        Task<(bool Success, string Message)> ActiveAccountAsync(ActiveAccountDto activeAccount);
+        Task<(bool Success, string Code, string Message)> ForgetPasswordAsync(string email);
+        Task<(bool Success, string Message)> ResetPasswordAsync(string email, string code, string newPassword);
+
         Task SendVerificationCode(AppUser user);
 
         

@@ -13,7 +13,7 @@ using System.Text;
 
 namespace inftastructer.Repository.Services
 {
-    public  class AccountServices: IAccountService
+    public  class AccountServices: IAccountServic
     {
       
         private readonly IEmailServices _emailService;

@@ -134,7 +134,15 @@ namespace inftastructer.Repository.Services
             var user = await _userManager.FindByEmailAsync(loginDto.email);
             if (user == null)
                 return "Invalid email or password.";
+            if (user != null && user.IsFirstLogin)
+            {
+                await SendWelcomeNotification(user);
+                await SendCoupon(user);
 
+                // تحديث العلم عشان مايتعادش الإرسال
+                user.IsFirstLogin = false;
+                await _userManager.UpdateAsync(user);
+            }
             if (!user.EmailConfirmed)
             {
                 // إرسال تأكيد البريد...

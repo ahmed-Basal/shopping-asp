@@ -13,5 +13,7 @@ namespace core.Entities
         public string? VerificationCode { get; set; }
         public DateTime? CodeExpiry { get; set; }
         public bool IsEmailConfirmed { get; set; }
+        public bool IsFirstLogin { get; set; } = true;
+
     }
 }

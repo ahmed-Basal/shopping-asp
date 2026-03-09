@@ -8,8 +8,8 @@ namespace core.interfaces
     {
         public ICategoryRepository CategoryRepository { get; }
         public IPhotoRepository PhotoRepository { get; }
-        public IProductRepository productRepository { get; }
-        public IBasketyRepository basketyRepository { get; }
+        public IProductRepository ProductRepository { get; }
+        public IBasketRepository CustomerBasketRepository { get; }
         public IAuth AuthRepository { get; }
         public IAccountRepository accountRepository { get; }
     }

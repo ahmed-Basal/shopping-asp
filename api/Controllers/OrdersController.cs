@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Crypto;
 using StackExchange.Redis;
+using Stripe.Climate;
 using System.Security.Claims;
 
 namespace api.Controllers
@@ -17,41 +18,79 @@ namespace api.Controllers
     [Authorize]
     public class OrdersController : ControllerBase
     {
-        private readonly IOrderServices orderServices;
 
-        public OrdersController(IOrderServices orderServices)
+        private readonly IOrderServices _orderService;
+
+        public OrdersController(IOrderServices orderService)
         {
-            this.orderServices = orderServices;
+            _orderService = orderService;
         }
 
-        [HttpPost("create-order")]
-        public async Task<ActionResult> create(orderDto orderDTO)
+        private string GetUserEmail()
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            return User?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                ?? User?.FindFirst("email")?.Value;
+        }
 
-            orders order = await orderServices.CreateOrdersAsync(orderDTO, email);
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateOrder([FromBody] orderDto dto)
+        {
+            var email = GetUserEmail();
+            if (email == null)
+                return Unauthorized(new { message = "Invalid token" });
+
+            var order = await _orderService.CreateOrderAsync(dto, email);
+
+            return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, order);
+        }
+
+
+        [HttpPut("update/{id:int}")]
+        public async Task<IActionResult> UpdateOrder(int id, [FromBody] orderDto dto)
+        {
+            var order = await _orderService.UpdateOrderAsync(id, dto);
 
             return Ok(order);
         }
-        [HttpGet("get-orders-for-user")]
-        public async Task<ActionResult> getorders()
+
+
+        [HttpGet("details/{id:int}", Name = "GetOrderByIdRoute")]
+        public async Task<IActionResult> GetOrderById(int id)
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var orders = await orderServices.GetAllOrdersForUserAsync(email);
+            var email = GetUserEmail();
+            if (email == null)
+                return Unauthorized();
+
+            var order = await _orderService.GetOrderByIdAsync(id, email);
+
+            if (order == null)
+                return NotFound(new { message = "Order not found" });
+
+            return Ok(order);
+        }
+
+
+        [HttpGet("my-orders")]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            var email = GetUserEmail();
+            if (email == null)
+                return Unauthorized();
+
+            var orders = await _orderService.GetAllOrdersForUserAsync(email);
+
             return Ok(orders);
         }
-        [HttpGet("get-order-by-id/{id}")]
-        public async Task<ActionResult> getorderbyid(int id)
+
+     
+        [HttpGet("delivery-methods")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetDeliveryMethods()
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var order = await orderServices.GetOrderByIdAsync(id, email);
-            return Ok(order);
+            var methods = await _orderService.GetDeliveryMethodsAsync();
+            return Ok(methods);
         }
-        [HttpGet("get-delivery-methods")]
-        public async Task<ActionResult> getdeliverymethods()
-        {
-            var deliveryMethods = await orderServices.GetDeliveryMethodsAsync();
-            return Ok(deliveryMethods);
-        }
+
+
     }
 }

@@ -18,25 +18,24 @@ using System.Text;
 
 namespace inftastructer
 {
-    public  static class  InferastruterRegister
+    public static class InferastruterRegister
     {
         public static IServiceCollection InfrastructureConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped(typeof(IGenricRepo<>), typeof(GenericRepositories<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ITokenGenerate, TokenGenerate>();
-            services.AddScoped<IBasketyRepository, CustomerBasketRepository>();
-            services.AddScoped<IAccountService, AccountServices>();
+
+         
+            services.AddScoped<IAccountServic, AccountServices>();
             services.AddScoped<IOrderServices, OrderServices>();
             services.AddScoped<IEmailServices, EmailServices>();
-
+                
             services.AddSingleton<IIamgeServices, Imagemangemt>();
 
             services.AddSingleton<IFileProvider>(
                 new PhysicalFileProvider(
                     Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")));
-
-         
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
@@ -48,20 +47,14 @@ namespace inftastructer
                 return ConnectionMultiplexer.Connect(options);
             });
 
-          
-
             services.AddDbContext<AppDbContext>(op =>
             {
                 op.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
             });
 
-          
-
             services.AddIdentity<AppUser, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-
-           
 
             services.AddAuthentication(options =>
             {
@@ -101,10 +94,13 @@ namespace inftastructer
                 };
             });
 
+            services.AddScoped<IPaymentServices, PaymentServices>();
+services.AddSingleton<IJobQueue, JobQueue>();
+           services.AddHostedService<JobWorker>();
+            services.AddSingleton<INotificationService, NotificationService>();
+           services.AddScoped<AuthService>();
+
             return services;
         }
     }
-
-       
-
-    }
+}

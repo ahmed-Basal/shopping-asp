@@ -23,7 +23,8 @@ namespace inftastructer.Repository.Services
             List<Claim> claims = new List<Claim>
     {
         new Claim(ClaimTypes.Name, user.UserName),
-        new Claim(ClaimTypes.Email, user.Email) 
+        new Claim(ClaimTypes.Email, user.Email) ,
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
     };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(connfigration["Token:Secret"]));
