@@ -4,11 +4,14 @@ using core.Entities;
 using core.Services;
 using core.shareing;
 using inftastructer.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+using System.IO;
 
 namespace inftastructer.Repository
 {
@@ -31,18 +34,30 @@ namespace inftastructer.Repository
 
             var product = mapper.Map<product>(productDTO);
 
-            await context.Products.AddAsync(product);
-            await context.SaveChangesAsync();
 
-            var ImagePath = await iamgeServices.AddImageAsync(productDTO.Photo, productDTO.Name);
 
-            var photo = ImagePath.Select(path => new photo
+            if (productDTO.Photo != null && productDTO.Photo.Any())
             {
-                iamgename = path,
-                productId = product.Id,
-            }).ToList();
+                product.photos = new List<photo>();
 
-            await context.Photos.AddRangeAsync(photo);
+                foreach (var file in productDTO.Photo)
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                    var path = Path.Combine("wwwroot/images", fileName);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    product.photos.Add(new photo
+                    {
+                        iamgename = fileName
+                    });
+                }
+            }
+
+            await context.Products.AddAsync(product);
             await context.SaveChangesAsync();
 
             return true;
@@ -80,20 +95,16 @@ namespace inftastructer.Repository
 
             if (!string.IsNullOrWhiteSpace(productparameter.Sort))
             {
-                var sort = productparameter.Sort;
-
-                if (string.Equals(sort, "PriceAsc", StringComparison.OrdinalIgnoreCase))
-                    query = query.OrderBy(p => p.NewPrice);
-
-                else if (string.Equals(sort, "PriceDesc", StringComparison.OrdinalIgnoreCase))
-                    query = query.OrderByDescending(p => p.NewPrice);
-
-                else
-                    query = query.OrderBy(p => p.Name);
+                query = productparameter.Sort.ToLower() switch
+                {
+                    "priceasc" => query.OrderBy(p => p.NewPrice),
+                    "pricedesc" => query.OrderByDescending(p => p.NewPrice),
+                    _ => query.OrderBy(p => p.Name) 
+                };
             }
             else
             {
-                query = query.OrderBy(p => p.Name);
+                query = query.OrderBy(p => p.Name); 
             }
 
             query = query.Skip((productparameter.PageNumber - 1) * productparameter.PageSize).Take(productparameter.PageSize);
@@ -105,41 +116,67 @@ namespace inftastructer.Repository
 
 
 
-        public async Task<bool> update(int id, updateproductDto dto)
+        public async Task<bool> UpdateAsync(int id, updateproductDto dto)
         {
             if (dto == null) return false;
 
             var product = await context.Products
-                .Include(p => p.category)
+                .Include(p => p.category)   // تأكد أن اسم الـ navigation property صحيح
                 .Include(p => p.photos)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return false;
 
-         
-            if (!string.IsNullOrEmpty(dto.Name)) product.Name = dto.Name;
-            if (!string.IsNullOrEmpty(dto.Description)) product.Description = dto.Description;
-            if (dto.NewPrice.HasValue) product.NewPrice = (decimal)dto.NewPrice;
-            if (dto.CategoryId.HasValue) product.CategoryId = (int)dto.CategoryId;
+            // تحديث البيانات الأساسية
+            if (!string.IsNullOrEmpty(dto.Name))
+                product.Name = dto.Name;
 
-           
-            if (dto.Photo != null && dto.Photo.Count > 0)
+            if (!string.IsNullOrEmpty(dto.Description))
+                product.Description = dto.Description;
+
+            if (dto.NewPrice.HasValue)
+                product.NewPrice = dto.NewPrice.Value;
+
+            if (dto.CategoryId.HasValue)
+                product.CategoryId = dto.CategoryId.Value;
+
+            // تحديث الصورة إذا تم تمرير صورة جديدة
+            if (dto.Photo != null)
             {
-                var imagePaths = await iamgeServices.AddImageAsync(dto.Photo, dto.Name ?? "product");
-                var newPhotos = imagePaths.Select(path => new photo
-                {
-                    iamgename = path,
-                    productId = product.Id
-                }).ToList();
+                // حذف أي صور قديمة
+                if (product.photos != null && product.photos.Any())
+                    context.Photos.RemoveRange(product.photos);
 
-                await context.Photos.AddRangeAsync(newPhotos);
+                // رفع الصورة الجديدة والحصول على مسارها
+                var imagePaths = await iamgeServices.AddImageAsync(dto.Photo, dto.Name ?? "product");
+                var imagePath = imagePaths?.FirstOrDefault();
+
+                // إنشاء photo جديد مرتبط بالمنتج
+                var newPhoto = new photo
+                {
+                    iamgename = imagePath ?? string.Empty,   // مجرد صورة واحدة
+                    productId = product.Id
+                };
+
+                await context.Photos.AddAsync(newPhoto);
             }
+
 
             await context.SaveChangesAsync();
             return true;
         }
 
+        // Implement interface method 'update' expected by IProductRepository
+        public Task<bool> update(int id, updateproductDto dto)
+        {
+            return UpdateAsync(id, dto);
+        }
 
+        public async Task<product> GetByNameAsync(string name)
+        {
+            return await context.Products
+                           .FirstOrDefaultAsync(p => p.Name == name);
+        }
     }
     }
 

@@ -7,7 +7,7 @@ namespace core.Services
 {
     public  interface  IIamgeServices
     {
-        Task<List<string>> AddImageAsync(IFormFileCollection files, string src);
+        Task<List<string>> AddImageAsync(IFormFile files, string src);
         void DeleteImageAsync(string src);
     }
 }

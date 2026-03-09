@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 
 namespace core.Dto
@@ -22,9 +23,11 @@ namespace core.Dto
         public int productId { get; set; }
     }
     public record AddproductDto {
+        [DisplayName("Name-product")]
         public string Name { get; set; }
         public string Description { get; set; }
-       // public decimal NewPrice { get; set; }
+        [DisplayName("Price")]
+     
         public decimal oldPrice { get; set; }
         public int CategoryId { get; set; }
         public IFormFileCollection Photo { get; set; }
@@ -35,7 +38,7 @@ namespace core.Dto
         public string ?Description { get; set; }
         public decimal ?NewPrice { get; set; }
         public int ? CategoryId { get; set; }
-        public IFormFileCollection? Photo { get; set; }
+        public IFormFile? Photo { get; set; }
     }
 
 }

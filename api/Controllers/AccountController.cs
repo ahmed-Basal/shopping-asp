@@ -18,12 +18,14 @@ namespace api.Controllers
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
-        private readonly IAccountService _account;
+        private readonly IAccountServic _account;
+        private readonly IUnitOfWork _unitOfWork;
       private readonly IMapper _mapper;
-        public AccountController(IAccountService account, IMapper mapper)
+        public AccountController(IAccountServic account, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _account = account;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
         [HttpPut("update-address")]
         public async Task<IActionResult> UpdateAddress([FromBody] ShipaddressDto addressDto)
@@ -34,8 +36,8 @@ namespace api.Controllers
 
             var address = _mapper.Map<Address>(addressDto);
 
-            var result = await _account.updateaddress(email, address);
-
+            var result = await _unitOfWork.AuthRepository.updateaddress(email, address);
+               
             if (!result)
                 return BadRequest("Update failed");
 

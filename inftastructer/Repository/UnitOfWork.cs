@@ -27,10 +27,12 @@ namespace inftastructer.Repository
         private readonly IConfiguration configuration;
         public ICategoryRepository CategoryRepository { get; }
         public IPhotoRepository PhotoRepository { get; }
-        public IProductRepository productRepository { get; }
-        public IBasketyRepository basketyRepository {  get; }
+        public IProductRepository ProductRepository { get; }
+ 
 
-        public IAuth AuthRepository { get; }
+         public IAuth AuthRepository
+        { get; }
+        public IBasketRepository CustomerBasketRepository { get; }
         public IAccountRepository accountRepository { get; }
 
 
@@ -47,8 +49,8 @@ namespace inftastructer.Repository
             this.tokenGenerate = tokenGenerate;
             CategoryRepository = new CategoryRepository(_context);
             PhotoRepository = new Photprepository(_context);
-            productRepository = new ProductRepository(_context, _mapper, _imageManagementService);
-            basketyRepository=new CustomerBasketRepository( redis);
+            ProductRepository=new ProductRepository(_context, _mapper, _imageManagementService);
+            CustomerBasketRepository = new CustomerBasketRepository( redis);
             AuthRepository = new AuthRepository(_userManager, emailServices,signInManager, tokenGenerate, configuration);
             accountRepository=new AccountRepository(_userManager);
         }

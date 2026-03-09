@@ -1,6 +1,9 @@
 using api.middleware;
 using AutoMapper;
+using core.interfaces;
 using inftastructer;
+using inftastructer.Repository.Services;
+using StackExchange.Redis;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,9 +15,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.InfrastructureConfiguration(builder.Configuration);
-
+builder.Configuration.AddUserSecrets<Program>();
+builder.Services.AddScoped<ICustomerBasketService, CustomerBasketService>();
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+//builder.Services.AddScoped<core.interfaces.ICustomerBasketService, inftastructer.Repository.Services.CustomerBasketService>();
 builder.Services.AddMemoryCache();
 
 
@@ -28,7 +33,11 @@ builder.Services.AddCors(options =>
               .AllowCredentials());
 });
 
-var app = builder.Build();
+builder.Services.AddScoped<core.interfaces.IBasketRepository, inftastructer.Repository.CustomerBasketRepository>();
+builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")));
+
+        var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -50,3 +59,4 @@ app.UseMiddleware<ExceptionsMiddleware>();
 app.MapControllers();
 
 app.Run();
+

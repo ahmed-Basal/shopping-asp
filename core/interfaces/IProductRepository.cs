@@ -14,5 +14,6 @@ namespace core.interfaces
         Task<bool> add(AddproductDto productDto);
         Task<bool> update(int id, updateproductDto updateproductDto);
         Task  delete(product product);
+        Task<product> GetByNameAsync(string name);
     }
 }

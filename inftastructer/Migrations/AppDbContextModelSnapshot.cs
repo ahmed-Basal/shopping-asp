@@ -323,6 +323,42 @@ namespace inftastructer.Migrations
                         });
                 });
 
+            modelBuilder.Entity("core.Entities.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BuyerEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DeliveryMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentIntentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeliveryMethodId");
+
+                    b.ToTable("orders");
+                });
+
             modelBuilder.Entity("core.Entities.category", b =>
                 {
                     b.Property<int>("Id")
@@ -361,9 +397,8 @@ namespace inftastructer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("MainImage")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -378,46 +413,15 @@ namespace inftastructer.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ordersId")
-                        .HasColumnType("int");
+                    b.Property<string>("image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ordersId");
+                    b.HasIndex("OrderId");
 
                     b.ToTable("orderItems");
-                });
-
-            modelBuilder.Entity("core.Entities.orders", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("buyeremail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("deliveryMethodId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("orderDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("statues")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("deliveryMethodId");
-
-                    b.ToTable("orders");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -555,25 +559,17 @@ namespace inftastructer.Migrations
                     b.Navigation("AppUser");
                 });
 
-            modelBuilder.Entity("core.Entities.orderitem", b =>
+            modelBuilder.Entity("core.Entities.Order", b =>
                 {
-                    b.HasOne("core.Entities.orders", null)
-                        .WithMany("orderItems")
-                        .HasForeignKey("ordersId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("core.Entities.orders", b =>
-                {
-                    b.HasOne("core.Entities.DeliveryMethod", "deliveryMethod")
+                    b.HasOne("core.Entities.DeliveryMethod", "DeliveryMethod")
                         .WithMany()
-                        .HasForeignKey("deliveryMethodId")
+                        .HasForeignKey("DeliveryMethodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("core.Entities.shoppingAddress", "address", b1 =>
+                    b.OwnsOne("core.Entities.shoppingAddress", "Address", b1 =>
                         {
-                            b1.Property<int>("ordersId")
+                            b1.Property<int>("OrderId")
                                 .HasColumnType("int");
 
                             b1.Property<string>("City")
@@ -603,18 +599,26 @@ namespace inftastructer.Migrations
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
 
-                            b1.HasKey("ordersId");
+                            b1.HasKey("OrderId");
 
                             b1.ToTable("orders");
 
                             b1.WithOwner()
-                                .HasForeignKey("ordersId");
+                                .HasForeignKey("OrderId");
                         });
 
-                    b.Navigation("address")
+                    b.Navigation("Address")
                         .IsRequired();
 
-                    b.Navigation("deliveryMethod");
+                    b.Navigation("DeliveryMethod");
+                });
+
+            modelBuilder.Entity("core.Entities.orderitem", b =>
+                {
+                    b.HasOne("core.Entities.Order", null)
+                        .WithMany("OrderItems")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -644,14 +648,14 @@ namespace inftastructer.Migrations
                     b.Navigation("Address");
                 });
 
+            modelBuilder.Entity("core.Entities.Order", b =>
+                {
+                    b.Navigation("OrderItems");
+                });
+
             modelBuilder.Entity("core.Entities.category", b =>
                 {
                     b.Navigation("products");
-                });
-
-            modelBuilder.Entity("core.Entities.orders", b =>
-                {
-                    b.Navigation("orderItems");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>

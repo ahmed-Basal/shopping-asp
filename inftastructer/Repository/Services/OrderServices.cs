@@ -13,80 +13,145 @@ namespace inftastructer.Repository.Services
 {
     public class OrderServices : IOrderServices
     {
-
         private readonly IUnitOfWork _unitOfWork;
         private readonly AppDbContext _context;
-        public IMapper _mapper;
-        public OrderServices(IUnitOfWork unitOfWork, AppDbContext context,IMapper mapper)
-        {
-            _mapper = mapper;
-            _unitOfWork = unitOfWork;
-            this._context = context;
-        }
-        public async Task<orders> CreateOrdersAsync(orderDto orderDTO, string BuyerEmail)
-        {
-            var basket = await _unitOfWork.basketyRepository.GetBasketAsync(orderDTO.basketId);
+        private readonly IMapper _mapper;
 
-            List<orderitem> orderItems = new List<orderitem>();
+        public OrderServices(IUnitOfWork unitOfWork, AppDbContext context, IMapper mapper)
+        {
+            _unitOfWork = unitOfWork;
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // إنشاء طلب جديد
+        public async Task<Order> CreateOrderAsync(orderDto orderDTO, string buyerEmail)
+        {
+            // جلب السلة
+            var basket = await _unitOfWork.CustomerBasketRepository.GetBasketAsync(orderDTO.basketId);//.basketyRepository.GetBasketAsync(orderDTO.basketId);
+            if (basket == null || basket.basketItems == null || !basket.basketItems.Any())
+                throw new Exception("Basket is empty or not found");
+
+            var orderItems = new List<orderitem>();
 
             foreach (var item in basket.basketItems)
             {
-                var Product = await _unitOfWork.productRepository.GetByIdAsync(item.Id);
-                var orderItem = new orderitem
-                    (Product.Id, item.Image, Product.Name, item.Price, item.Qunatity);
+                // جلب المنتج من الـ ProductId
+                var product = await _unitOfWork.ProductRepository.GetByIdAsync(item.ProductId);
+                if (product == null)
+                    throw new Exception($"Product with id {item.ProductId} not found");
+
+                var orderItem = new orderitem(
+                    product.Id,
+                    product.photos,   
+                    product.Name,       
+                    product.NewPrice,    
+                    item.Quantity        
+                );
+
                 orderItems.Add(orderItem);
-
             }
-            var deliverMethod = await _context.deliveryMethods.FirstOrDefaultAsync(m => m.Id == orderDTO.deliveryMethodId);
 
-            var subTotal = orderItems.Sum(m => m.Price * m.Quantity);
+            if (!orderItems.Any())
+                throw new Exception("No valid products found in basket");
 
-            var ship = _mapper.Map<shoppingAddress>(orderDTO.shipaddressDto);
+            // جلب طريقة التوصيل
+            var deliveryMethod = await _context.deliveryMethods
+                .FirstOrDefaultAsync(m => m.Id == orderDTO.deliveryMethodId);
+            if (deliveryMethod == null)
+                throw new Exception("Delivery method not found");
 
-           
+            // حساب المجموع
+            var subTotal = orderItems.Sum(i => i.Price * i.Quantity);
 
-           
+            // عمل mapping للعنوان
+            var shipAddress = orderDTO.shipaddressDto != null
+                ? _mapper.Map<shoppingAddress>(orderDTO.shipaddressDto)
+                : null;
 
-            var order = new
-                orders(BuyerEmail, subTotal, ship, deliverMethod, orderItems, basket.PaymentIntentId);
+            // إنشاء الطلب
+            var order = new Order(
+                buyerEmail,
+                subTotal,
+                shipAddress,
+                deliveryMethod,
+                orderItems,
+                basket.PaymentIntentId
+            );
 
             await _context.orders.AddAsync(order);
             await _context.SaveChangesAsync();
-          
+
             return order;
         }
 
-        public async Task<IReadOnlyList<orderToReturn>> GetAllOrdersForUserAsync(string BuyerEmail)
-        {
-            var orders = await _context.orders
-            .Where(m => m.buyeremail == BuyerEmail)
-            .Include(inc => inc.orderItems)
-            .Include(inc => inc.deliveryMethod)
-              .ToListAsync();
-
-            var result = _mapper.Map<IReadOnlyList<orderToReturn>>(orders);
-            return result;
-        }
-
-        public async Task<IReadOnlyList<DeliveryMethod>> GetDeliveryMethodsAsync()
-        
-        =>    await _context.deliveryMethods.AsNoTracking().ToListAsync();
-
-
-
-
-
-        public async Task<orderToReturn> GetOrderByIdAsync(int id, string BuyerEmail)
+        // تحديث طلب موجود
+        public async Task<Order> UpdateOrderAsync(int orderId, orderDto orderDTO)
         {
             var order = await _context.orders
-                .Where(m => m.Id == id && m.buyeremail == BuyerEmail)
-                .Include(inc => inc.deliveryMethod)
+                .Include(o => o.OrderItems)
+                .Include(o => o.DeliveryMethod)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                throw new Exception("Order not found");
+
+            // تحديث طريقة التوصيل إذا اتغيرت
+            if (orderDTO.deliveryMethodId != order.DeliveryMethod.Id)
+            {
+                var deliveryMethod = await _context.deliveryMethods
+                    .FirstOrDefaultAsync(m => m.Id == orderDTO.deliveryMethodId);
+                if (deliveryMethod == null)
+                    throw new Exception("Delivery method not found");
+
+                order.DeliveryMethod = deliveryMethod;
+            }
+
+            // تحديث عنوان الشحن
+            if (orderDTO.shipaddressDto != null)
+            {
+                order.Address = _mapper.Map<shoppingAddress>(orderDTO.shipaddressDto);
+            }
+
+            // إعادة حساب المجموع
+            order.Subtotal = order.OrderItems.Sum(i => i.Price * i.Quantity);
+
+            await _context.SaveChangesAsync();
+            return order;
+        }
+
+        // جلب كل طرق التوصيل
+        public async Task<IReadOnlyList<DeliveryMethod>> GetDeliveryMethodsAsync()
+        {
+            return await _context.deliveryMethods.AsNoTracking().ToListAsync();
+        }
+
+        // جلب طلب محدد حسب Id للمستخدم
+        public async Task<orderToReturn> GetOrderByIdAsync(int id, string buyerEmail)
+        {
+            var order = await _context.orders
+                .Where(o => o.Id == id && o.BuyerEmail == buyerEmail)
+                .Include(o => o.DeliveryMethod)
+                .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync();
 
             if (order == null) return null;
 
-            var result = _mapper.Map<orderToReturn>(order);
-            return result;
+            return _mapper.Map<orderToReturn>(order);
+        }
+
+        // جلب كل الطلبات الخاصة بالمستخدم
+        public async Task<IReadOnlyList<orderToReturn>> GetAllOrdersForUserAsync(string buyerEmail)
+        {
+            var orders = await _context.orders
+                .Where(o => o.BuyerEmail == buyerEmail)
+                .Include(o => o.OrderItems)
+                .Include(o => o.DeliveryMethod)
+                .OrderByDescending(o => o.OrderDate)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return _mapper.Map<IReadOnlyList<orderToReturn>>(orders);
         }
     }
 }

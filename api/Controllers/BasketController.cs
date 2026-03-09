@@ -1,42 +1,97 @@
 ﻿using api.halper;
 using AutoMapper;
+using core.Dto;
 using core.Entities;
 using core.interfaces;
+using core.Services;
+using inftastructer.Repository.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace api.Controllers
 {
-    public class BasketsController : BaseController
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class BasketsController : ControllerBase
     {
-        public BasketsController(IUnitOfWork work, IMapper mapper) : base(work, mapper)
+        private readonly ICustomerBasketService _basketService;
+        private readonly IUnitOfWork unitOfWork;
+        private string GetUserId()
         {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+        public BasketsController(ICustomerBasketService basketService, IUnitOfWork unitOfWork)
+        {
+            _basketService = basketService;
+            unitOfWork = unitOfWork;
         }
 
-        [HttpGet("get-basket-item/{id}")]
-        public async Task<IActionResult> get(string id) { 
-                    var result = await work.basketyRepository.GetBasketAsync(id);
-            if (result is null)
+
+        [HttpGet("get-basket")]
+
+
+        public async Task<ActionResult<CustomerBasketDto>> GetBasket()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+            var basket = await _basketService.GetBasketAsync(userId);
+            // Manual Mapping
+            var basketDto = new CustomerBasketDto
             {
-                return Ok(new CustomerBasket());
-            }
-            return Ok(result);
+                Id = basket.Id,
+                Items = basket.Items.Select(i => new BasketItemDto
+                {
+                    Name = i.Name,
+                    Price = i.Price,
+                    PictureUrl = i.PictureUrl,
+                    Quantity = i.Quantity
+                }).ToList()
+            };
+
+            return Ok(basketDto);
         }
 
-
-        [HttpPost("update-basket")]
-        public async Task<IActionResult> add(CustomerBasket basket)
+        [HttpPost("create-cart")]
+        public async Task<ActionResult<CustomerBasketDto>> CreateBasket(List<AddToBasketDto> items)
         {
-            var _basket = await work.basketyRepository.UpdateBasketAsync(basket);
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var basket = await _basketService.CreateBasketAsync(userId, items);
+
             return Ok(basket);
         }
-        [HttpDelete("delete-basket-item/{id}")]
-        public async Task<IActionResult> delete(string id)
+
+      
+      
+      
+        [HttpPut("update-item")]
+        public async Task<ActionResult<CustomerBasketDto>> UpdateItem(AddToBasketDto dto)
         {
-            var result = await work.basketyRepository.DeleteBasketAsync(id);
-            return result ? Ok(new ResponseAPI(200, "item deleted!")) :
-                BadRequest(new ResponseAPI(400, "faild delete"));
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var basket = await _basketService.AddOrUpdateItemAsync(userId, dto);
+
+            return Ok(basket);
+        }
+
+       
+        [HttpDelete("delete-cart")]
+        public async Task<IActionResult> DeleteBasket()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var deleted = await _basketService.DeleteBasketAsync(userId);
+
+            if (!deleted)
+                return NotFound("Basket not found");
+
+            return NoContent();
         }
     }
 }

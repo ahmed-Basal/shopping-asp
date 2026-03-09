@@ -19,7 +19,7 @@ namespace inftastructer.Data
         public DbSet<product> Products { get; set; }
         public DbSet<photo> Photos { get; set; }
         public virtual DbSet<Address> address { get; set; }
-        public virtual DbSet<orders> orders { get; set; }
+        public virtual DbSet<Order> orders { get; set; }
         public virtual DbSet<orderitem> orderItems { get; set; }
         public virtual DbSet<DeliveryMethod> deliveryMethods { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)

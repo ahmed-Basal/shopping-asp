@@ -24,10 +24,10 @@ namespace api.Controllers
         {
             try
             {
-                var Product = await work.productRepository
+                var Product = await work.ProductRepository
                     .GetAll(productparameter); 
 
-              var totalcount= await work.productRepository.ContAsync();
+              var totalcount= await work.ProductRepository.ContAsync();
                 var productList = Product.ToList().AsReadOnly();
 
                 return Ok(new pagination<ProductDto>(productparameter.PageNumber,productparameter.PageSize,totalcount, productList));
@@ -44,7 +44,7 @@ namespace api.Controllers
             {
 
 
-                var newproduc = await work.productRepository.GetByIdAsync(
+                var newproduc = await work.ProductRepository.GetByIdAsync(
     id,
     x => x.category,
     x => x.photos
@@ -68,7 +68,7 @@ namespace api.Controllers
         {
             try
             {
-                await work.productRepository.add(productDTO);
+                await work.ProductRepository.add(productDTO);
                 return Ok(new ResponseAPI(200, "item add"));
             }
             catch (Exception ex)
@@ -81,7 +81,7 @@ namespace api.Controllers
         {
             try
             {
-                await work.productRepository.update(id,mapper.Map<updateproductDto>(productDTO));
+                await work.ProductRepository.update(id,mapper.Map<updateproductDto>(productDTO));
                 return Ok(new ResponseAPI(200, "item update"));
             }
             catch (Exception ex)
@@ -98,14 +98,15 @@ namespace api.Controllers
         {
             try
             {
-                var product = await work.productRepository.GetByIdAsync(
+                var product = await work.ProductRepository.GetByIdAsync(
      Id,
      x => x.photos,
      x => x.category
  );
 
 
-                await work.productRepository.delete(product);
+                await work.ProductRepository.delete(product);
+                //productRepository.delete(product);
 
                 return Ok(value: new ResponseAPI(statusCode: 200,"succed delated"));
             }
