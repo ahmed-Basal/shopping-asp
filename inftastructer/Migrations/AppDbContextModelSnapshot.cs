@@ -228,6 +228,9 @@ namespace inftastructer.Migrations
                     b.Property<bool>("IsEmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -323,42 +326,6 @@ namespace inftastructer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("core.Entities.Order", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BuyerEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DeliveryMethodId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PaymentIntentId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DeliveryMethodId");
-
-                    b.ToTable("orders");
-                });
-
             modelBuilder.Entity("core.Entities.category", b =>
                 {
                     b.Property<int>("Id")
@@ -389,7 +356,7 @@ namespace inftastructer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("core.Entities.orderitem", b =>
+            modelBuilder.Entity("core.Entities.comment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -397,31 +364,32 @@ namespace inftastructer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductItemId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProductName")
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Quantity")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ParentCommentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("image")
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
+                    b.HasIndex("ParentCommentId");
 
-                    b.ToTable("orderItems");
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -559,66 +527,29 @@ namespace inftastructer.Migrations
                     b.Navigation("AppUser");
                 });
 
-            modelBuilder.Entity("core.Entities.Order", b =>
+            modelBuilder.Entity("core.Entities.comment", b =>
                 {
-                    b.HasOne("core.Entities.DeliveryMethod", "DeliveryMethod")
-                        .WithMany()
-                        .HasForeignKey("DeliveryMethodId")
+                    b.HasOne("core.Entities.comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId");
+
+                    b.HasOne("core.Entities.product", "Product")
+                        .WithMany("Comments")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("core.Entities.shoppingAddress", "Address", b1 =>
-                        {
-                            b1.Property<int>("OrderId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("FirstName")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<int>("Id")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("LastName")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("State")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("ZipCode")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.Navigation("Address")
+                    b.HasOne("core.Entities.AppUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DeliveryMethod");
-                });
+                    b.Navigation("ParentComment");
 
-            modelBuilder.Entity("core.Entities.orderitem", b =>
-                {
-                    b.HasOne("core.Entities.Order", null)
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -646,11 +577,8 @@ namespace inftastructer.Migrations
             modelBuilder.Entity("core.Entities.AppUser", b =>
                 {
                     b.Navigation("Address");
-                });
 
-            modelBuilder.Entity("core.Entities.Order", b =>
-                {
-                    b.Navigation("OrderItems");
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("core.Entities.category", b =>
@@ -658,8 +586,15 @@ namespace inftastructer.Migrations
                     b.Navigation("products");
                 });
 
+            modelBuilder.Entity("core.Entities.comment", b =>
+                {
+                    b.Navigation("Replies");
+                });
+
             modelBuilder.Entity("core.Entities.product", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("photos");
                 });
 #pragma warning restore 612, 618

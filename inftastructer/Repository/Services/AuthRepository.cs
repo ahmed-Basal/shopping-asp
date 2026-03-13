@@ -52,82 +52,105 @@ namespace inftastructer.Repository.Services
             return code;
         }
 
-        public async Task<string?> RegisterAsync(registerDto dto)
+        //  public async Task<string?> RegisterAsync(registerDto dto)
+        //  {
+        //      if (dto == null)
+        //          return "Invalid data";
+
+        //      // check email
+        //      var existingEmail = await _userManager.FindByEmailAsync(dto.email);
+        //      if (existingEmail != null)
+        //          return "This email is already registered";
+
+        //      // check username
+        //      var existingUsername = await _userManager.FindByNameAsync(dto.UserName);
+        //      if (existingUsername != null)
+        //          return "This username already exists";
+
+        //      // create user
+        //      var user = new AppUser
+        //      {
+        //          DisplayName = dto.Displayname,
+        //          Email = dto.email,
+        //          UserName = dto.UserName,
+        //          EmailConfirmed = false
+        //      };
+
+        //      var createResult = await _userManager.CreateAsync(user, dto.Password);
+
+        //      if (!createResult.Succeeded)
+        //          return createResult.Errors.FirstOrDefault()?.Description;
+
+        //      // generate 6-digit confirmation code
+        //      string code = await GenerateSixDigitCode(user); // ده الكود الجديد
+
+        //      // send email with 6-digit code
+        //      await SendEmail(
+        //          user.Email,
+        //          user.Id,
+        //          code, // نرسل الكود بدل الـ token
+        //          "Activate Account",
+        //          "Confirm Email",
+        //          $"Your confirmation code is: {code}"
+        //      );
+
+        //      return null;
+        //  }
+
+
+        //  public async Task SendEmail(
+        //string email,
+        //string userId,
+        //string code,
+        //string component,
+        //string subject,
+        //string message)
+        //  {
+        //      string baseUrl = _configuration["EmailSetting:BaseUrl"];
+
+        //      var body = Emailstringbody.SendEmail(
+        //          email,
+        //          userId,
+        //          baseUrl,
+        //          code,
+        //          component,
+        //          subject,
+        //          message
+        //      );
+
+        //      var result = new EmailDto(
+        //          email,
+        //          "noreply@yourapp.com",
+        //          subject,
+        //          body
+        //      );
+
+        //      await _emailSender.SendEmailAsync(result);
+        ////  
+        public async Task<(bool Success, string Message)> RegisterAsync(registerDto register)
         {
-            if (dto == null)
-                return "Invalid data";
-
-            // check email
-            var existingEmail = await _userManager.FindByEmailAsync(dto.email);
-            if (existingEmail != null)
-                return "This email is already registered";
-
-            // check username
-            var existingUsername = await _userManager.FindByNameAsync(dto.UserName);
-            if (existingUsername != null)
-                return "This username already exists";
-
-            // create user
-            var user = new AppUser
+            var user = new IdentityUser
             {
-                DisplayName = dto.Displayname,
-                Email = dto.email,
-                UserName = dto.UserName,
-                EmailConfirmed = false
+                UserName = register.email,
+                Email = register.email
             };
 
-            var createResult = await _userManager.CreateAsync(user, dto.Password);
+            var result = await _userManager.CreateAsync(user, register.Password);
 
-            if (!createResult.Succeeded)
-                return createResult.Errors.FirstOrDefault()?.Description;
+            if (!result.Succeeded)
+                return (false, string.Join(" | ", result.Errors.Select(e => e.Description)));
 
-            // generate 6-digit confirmation code
-            string code = await GenerateSixDigitCode(user); // ده الكود الجديد
+            // توليد رمز التأكيد
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            // send email with 6-digit code
-            await SendEmail(
-                user.Email,
-                user.Id,
-                code, // نرسل الكود بدل الـ token
-                "Activate Account",
-                "Confirm Email",
-                $"Your confirmation code is: {code}"
-            );
+            // رابط التفعيل (يتم إرساله عبر الإيميل)
+            var confirmationLink = $"https://localhost:5239/activate?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-            return null;
+            // هنا تبعت confirmationLink في إيميل المستخدم
+            // SendEmail(user.Email, "Activate your account", confirmationLink);
+
+            return (true, "Registration successful, please check your email to activate your account.");
         }
-
-
-        public async Task SendEmail(
-      string email,
-      string userId,
-      string code,
-      string component,
-      string subject,
-      string message)
-        {
-            string baseUrl = _configuration["EmailSetting:BaseUrl"];
-
-            var body = Emailstringbody.SendEmail(
-                email,
-                userId,
-                baseUrl,
-                code,
-                component,
-                subject,
-                message
-            );
-
-            var result = new EmailDto(
-                email,
-                "noreply@yourapp.com",
-                subject,
-                body
-            );
-
-            await _emailSender.SendEmailAsync(result);
-        }
-
 
         public async Task<string> LoginAsync(loginDto loginDto)
         {
@@ -136,9 +159,7 @@ namespace inftastructer.Repository.Services
                 return "Invalid email or password.";
             if (user != null && user.IsFirstLogin)
             {
-                await SendWelcomeNotification(user);
-                await SendCoupon(user);
-
+              
                 // تحديث العلم عشان مايتعادش الإرسال
                 user.IsFirstLogin = false;
                 await _userManager.UpdateAsync(user);

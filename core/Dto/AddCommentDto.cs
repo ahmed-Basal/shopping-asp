@@ -4,10 +4,12 @@ using System.Text;
 
 namespace core.Dto
 {
-    public  class ReviewDto
+    public  class AddCommentDto
     {
+        public string Content { get; set; }
+
         public int ProductId { get; set; }
-        public int Rating { get; set; }
-        public string? Comment { get; set; }
+
+        public int? ParentCommentId { get; set; }
     }
 }

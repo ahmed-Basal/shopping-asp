@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Linq;
 
 namespace core.Entities
 {
@@ -14,6 +15,6 @@ namespace core.Entities
         public DateTime? CodeExpiry { get; set; }
         public bool IsEmailConfirmed { get; set; }
         public bool IsFirstLogin { get; set; } = true;
-
+        public ICollection<comment> Comments { get; set; } = new List<comment>();
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Linq;
 
 namespace core.Entities
 {
@@ -17,7 +18,6 @@ namespace core.Entities
         [System.ComponentModel.DataAnnotations.Schema.ForeignKey("CategoryId")]
         public virtual category category { get; set; }
 
-        public virtual List<Review> Reviews { get; set; } = new List<Review>();
-        public virtual List<Favorite> Favorites { get; set; } = new List<Favorite>();
+        public virtual List<comment> Comments { get; set; } = new();
     }
 }

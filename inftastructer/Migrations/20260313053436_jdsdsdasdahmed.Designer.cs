@@ -12,8 +12,8 @@ using inftastructer.Data;
 namespace inftastructer.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260213190927_dsdasdadasd")]
-    partial class dsdasdadasd
+    [Migration("20260313053436_jdsdsdasdahmed")]
+    partial class jdsdsdasdahmed
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -210,6 +210,9 @@ namespace inftastructer.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CodeExpiry")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -223,6 +226,12 @@ namespace inftastructer.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFirstLogin")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
@@ -258,6 +267,9 @@ namespace inftastructer.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("VerificationCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
@@ -269,6 +281,52 @@ namespace inftastructer.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("core.Entities.DeliveryMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DeliveryTime")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("deliveryMethods");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DeliveryTime = "only a week",
+                            Description = "the first fast delievey",
+                            Name = "Dhl",
+                            Price = 15m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DeliveryTime = "only a  tweo week",
+                            Description = "Makeyour product save",
+                            Name = "xxx",
+                            Price = 121m
+                        });
                 });
 
             modelBuilder.Entity("core.Entities.category", b =>
@@ -299,6 +357,42 @@ namespace inftastructer.Migrations
                             description = "test",
                             name = "test"
                         });
+                });
+
+            modelBuilder.Entity("core.Entities.comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ParentCommentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentCommentId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -342,16 +436,16 @@ namespace inftastructer.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("NewPrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("oldPrice")
                         .HasColumnType("decimal(18,2)");
@@ -367,9 +461,9 @@ namespace inftastructer.Migrations
                         {
                             Id = 1,
                             CategoryId = 1,
+                            Description = "test",
+                            Name = "test",
                             NewPrice = 20.5m,
-                            description = "test",
-                            name = "test",
                             oldPrice = 0m
                         });
                 });
@@ -436,19 +530,46 @@ namespace inftastructer.Migrations
                     b.Navigation("AppUser");
                 });
 
+            modelBuilder.Entity("core.Entities.comment", b =>
+                {
+                    b.HasOne("core.Entities.comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId");
+
+                    b.HasOne("core.Entities.product", "Product")
+                        .WithMany("Comments")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("core.Entities.AppUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ParentComment");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("core.Entities.photo", b =>
                 {
-                    b.HasOne("core.Entities.product", null)
+                    b.HasOne("core.Entities.product", "product")
                         .WithMany("photos")
                         .HasForeignKey("productId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("product");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>
                 {
                     b.HasOne("core.Entities.category", "category")
-                        .WithMany()
+                        .WithMany("products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -458,12 +579,25 @@ namespace inftastructer.Migrations
 
             modelBuilder.Entity("core.Entities.AppUser", b =>
                 {
-                    b.Navigation("Address")
-                        .IsRequired();
+                    b.Navigation("Address");
+
+                    b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("core.Entities.category", b =>
+                {
+                    b.Navigation("products");
+                });
+
+            modelBuilder.Entity("core.Entities.comment", b =>
+                {
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("photos");
                 });
 #pragma warning restore 612, 618

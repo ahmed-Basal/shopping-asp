@@ -27,7 +27,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
-        policy.WithOrigins("http://localhost:3000") 
+        policy.WithOrigins("http://localhost:5239") 
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());

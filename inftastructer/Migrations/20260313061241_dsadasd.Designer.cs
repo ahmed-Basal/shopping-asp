@@ -12,8 +12,8 @@ using inftastructer.Data;
 namespace inftastructer.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260222004437_dsadamigration")]
-    partial class dsadamigration
+    [Migration("20260313061241_dsadasd")]
+    partial class dsadasd
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -231,6 +231,9 @@ namespace inftastructer.Migrations
                     b.Property<bool>("IsEmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsFirstLogin")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -356,7 +359,7 @@ namespace inftastructer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("core.Entities.orderitem", b =>
+            modelBuilder.Entity("core.Entities.comment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -364,63 +367,32 @@ namespace inftastructer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("MainImage")
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductItemId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ordersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ordersId");
-
-                    b.ToTable("orderItems");
-                });
-
-            modelBuilder.Entity("core.Entities.orders", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("buyeremail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("deliveryMethodId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("orderDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("statues")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("ParentCommentId")
+                        .HasColumnType("int");
 
-                    b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("deliveryMethodId");
+                    b.HasIndex("ParentCommentId");
 
-                    b.ToTable("orders");
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Comment");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -558,66 +530,29 @@ namespace inftastructer.Migrations
                     b.Navigation("AppUser");
                 });
 
-            modelBuilder.Entity("core.Entities.orderitem", b =>
+            modelBuilder.Entity("core.Entities.comment", b =>
                 {
-                    b.HasOne("core.Entities.orders", null)
-                        .WithMany("orderItems")
-                        .HasForeignKey("ordersId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
+                    b.HasOne("core.Entities.comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId");
 
-            modelBuilder.Entity("core.Entities.orders", b =>
-                {
-                    b.HasOne("core.Entities.DeliveryMethod", "deliveryMethod")
-                        .WithMany()
-                        .HasForeignKey("deliveryMethodId")
+                    b.HasOne("core.Entities.product", "Product")
+                        .WithMany("Comments")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsOne("core.Entities.shoppingAddress", "address", b1 =>
-                        {
-                            b1.Property<int>("ordersId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("FirstName")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<int>("Id")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("LastName")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("State")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("ZipCode")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.HasKey("ordersId");
-
-                            b1.ToTable("orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ordersId");
-                        });
-
-                    b.Navigation("address")
+                    b.HasOne("core.Entities.AppUser", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("deliveryMethod");
+                    b.Navigation("ParentComment");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("core.Entities.photo", b =>
@@ -645,6 +580,8 @@ namespace inftastructer.Migrations
             modelBuilder.Entity("core.Entities.AppUser", b =>
                 {
                     b.Navigation("Address");
+
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("core.Entities.category", b =>
@@ -652,13 +589,15 @@ namespace inftastructer.Migrations
                     b.Navigation("products");
                 });
 
-            modelBuilder.Entity("core.Entities.orders", b =>
+            modelBuilder.Entity("core.Entities.comment", b =>
                 {
-                    b.Navigation("orderItems");
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("core.Entities.product", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("photos");
                 });
 #pragma warning restore 612, 618

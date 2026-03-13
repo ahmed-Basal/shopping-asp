@@ -28,7 +28,7 @@ namespace inftastructer
 
          
             services.AddScoped<IAccountServic, AccountServices>();
-            services.AddScoped<IOrderServices, OrderServices>();
+            
             services.AddScoped<IEmailServices, EmailServices>();
                 
             services.AddSingleton<IIamgeServices, Imagemangemt>();
@@ -95,10 +95,7 @@ namespace inftastructer
             });
 
             services.AddScoped<IPaymentServices, PaymentServices>();
-services.AddSingleton<IJobQueue, JobQueue>();
-           services.AddHostedService<JobWorker>();
-            services.AddSingleton<INotificationService, NotificationService>();
-           services.AddScoped<AuthService>();
+            services.AddScoped<ICommentService, CommentService>();
 
             return services;
         }
